@@ -14,7 +14,7 @@ using namespace std;
 using namespace sf;
 using namespace siv;
 ////////////////////////////////////////////////
-RenderWindow window(VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Tester");
+RenderWindow window(VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Smooth Life");
 RenderTexture texture;
 float SQUARE_SIZE = (float)SCREEN_WIDTH / (float)colSize;
 Clock simClock, frameClock;
