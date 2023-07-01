@@ -5,16 +5,13 @@
 #include <iostream>
 #include <math.h>
 #include "libraries/PerlinNoise-master/PerlinNoise.hpp"
-#define SCREEN_WIDTH 1080
-#define SCREEN_HEIGHT 1080
-#define colSize 1080
-#define rowSize 1080
-#define SQUARE_COL(intensity) Color(255 * intensity, 0, 0)
+#include "settings.cpp"
+#define SQUARE_COL(intensity) Color(255 * intensity, 255 * sin(intensity), 0)
 using namespace std;
 using namespace sf;
 using namespace siv;
 ////////////////////////////////////////////////
-RenderWindow window(VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Smooth Life");
+RenderWindow window(VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Tester");
 RenderTexture texture;
 float SQUARE_SIZE = (float)SCREEN_WIDTH / (float)colSize;
 Clock simClock, frameClock;
@@ -32,9 +29,11 @@ bool run = true;
 VertexArray square(Quads, 4 * rowSize * colSize);
 int imageCount = 0;
 /////////////Propriatary blob Variables///////////
+// float radiusOuter = 21;
+// float radiusInner = radiusOuter / 3;
 float radiusOuter = 21;
 float radiusInner = radiusOuter / 3;
-float alpha = 0.028;
+float alpha = 0.0028;
 // float alpha = 0.147;
 float birth1 = 0.278;
 float birth2 = 0.365;
@@ -51,6 +50,7 @@ int aliveNeighbors(int row, int column);
 void step();
 void update();
 void init();
+void refresh();
 void eventLoop();
 void printGrid(bool buffer);
 int loop_mod(int dividend, int divisor);
@@ -69,6 +69,7 @@ int main()
     init();
     texture.draw(square);
     texture.display();
+    // bool launched = false;
     while (window.isOpen())
     {
         eventLoop();
@@ -96,7 +97,7 @@ int main()
                 frameCount = 0;
                 frameTimeEnd = Time::Zero;
                 frameClock.restart();
-                cout << FPS << endl;
+                window.setTitle("Smooth Life | FPS: " + to_string(FPS));
             }
             timeEnd = simClock.getElapsedTime();
             // if (!pause && timeEnd >= updateInterval)
@@ -113,7 +114,6 @@ int main()
     }
     return 0;
 }
-
 void addQuad(Vector2f pos, VertexArray *va, Color color, float size, int *index)
 {
     (*va)[*index].position = pos;
@@ -253,18 +253,19 @@ void init()
 {
     int k = 0;
     PerlinNoise p(PerlinNoise::seed_type(time(0)));
-    for (int i = 0; i < colSize; i++)
+    for (int i = 0; i < rowSize; i++)
     {
-        for (int j = 0; j < rowSize; j++)
+        for (int j = 0; j < colSize; j++)
         {
             Color c;
             // float intensity = (float)rand() / (float)RAND_MAX;
             float intensity = p.octave2D_01(j * 0.01f, i * 0.01f, 8);
             grid[i * colSize + j] = intensity;
             c = SQUARE_COL(intensity);
-            addQuad(Vector2f((j * SQUARE_SIZE), (i * SQUARE_SIZE)), &square, c, SQUARE_SIZE, &k);
+            addQuad(Vector2f((i * SQUARE_SIZE), (j * SQUARE_SIZE)), &square, c, SQUARE_SIZE, &k);
         }
     }
+    clearBuffer();
 }
 void eventLoop()
 {
@@ -315,8 +316,11 @@ void eventLoop()
                     timeFrameStep = 1;
                 updateInterval = seconds(1.0f / timeFrameStep);
             }
+            if (event.key.code == Keyboard::BackSpace)
+                refresh();
             if (event.key.code == Keyboard::Q)
                 printGrid(false);
+
             break;
         }
     }
@@ -331,6 +335,25 @@ void printGrid(bool buffer)
         }
         cout << endl;
     }
+}
+void refresh()
+{
+    int k = 0;
+    PerlinNoise p(PerlinNoise::seed_type(time(0)));
+    for (int i = 0; i < rowSize; i++)
+    {
+        for (int j = 0; j < colSize; j++)
+        {
+            Color c;
+            float intensity = p.octave2D_01(j * 0.01f, i * 0.01f, 8);
+            grid[i * colSize + j] = intensity;
+            c = SQUARE_COL(intensity);
+            setCell(i, j, intensity, false);
+        }
+    }
+    clearBuffer();
+    texture.clear(Color::Transparent);
+    texture.draw(square);
 }
 int loop_mod(int dividend, int divisor)
 {
